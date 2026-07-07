@@ -6,8 +6,8 @@ import logging
 import whisper
 import torch
 import numpy as np
-import torch_npu
-from torch_npu.contrib import transfer_to_npu
+# import torch_npu
+# from torch_npu.contrib import transfer_to_npu
 from typing import Annotated
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 

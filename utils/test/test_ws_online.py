@@ -51,7 +51,7 @@ async def send_audio_chunks(pcm_file, ws_url):
 async def main_thread():
     # 并发压测
     tasks = []
-    for i in range(50):
+    for i in range(1):
         pcm_file = f"/home/xjtu/zhangs/asr_dev/test2_16k(1).pcm"  # 可以是同一个文件或不同文件
         # pcm_file = f"/root/workspace/asr_dev/dev/test_file/全程静音.wav"  # 可以是同一个文件或不同文件
         ws_url = "ws://10.236.2.52:8081/v1.0.1/seacraft_asr_online"
@@ -61,11 +61,11 @@ async def main_thread():
 
 if __name__ == "__main__":
     # 多并发压测压测
-    asyncio.run(main_thread())
+    # asyncio.run(main_thread())
 
 
     #======================================================================
     # 单个客户端测试
-    # pcm_file = "/home/xjtu/zhangs/asr_dev/test2_16k(1).pcm" # PCM 文件路径
-    # ws_url = "ws://10.236.2.52:8081/v1.0.1/seacraft_asr_online"  # WebSocket 服务端地址
-    # asyncio.run(send_audio_chunks(pcm_file, ws_url))
+    pcm_file = "/home/xjtu/zhangs/asr_dev/test2_16k(1).pcm" # PCM 文件路径
+    ws_url = "ws://10.236.2.52:8081/v1.0.1/seacraft_asr_online"  # WebSocket 服务端地址
+    asyncio.run(send_audio_chunks(pcm_file, ws_url))

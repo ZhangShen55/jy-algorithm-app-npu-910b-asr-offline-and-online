@@ -96,7 +96,7 @@ docker run -d --name asr_offline_server_260104 \
   -v /usr/local/Ascend/driver:/usr/local/Ascend/driver:ro \
   -v /etc/ascend_install.info:/etc/ascend_install.info:ro \
   -v /home/xjtu/model_zoo/model_asr/:/model:ro \
-  -v /root/config/asr_config_offline.json:/config.json:ro \
+  -v /root/config/asr_config_offline.toml:/config.toml:ro \
   -p 8081:9000 \
   jy-algorithm-app-asr-ascend_cann8.1.rc1-ub2204py310:v1.1.9_260104
 ```
@@ -121,7 +121,7 @@ docker run -d --name asr_offline_server_251230 \
   -v /usr/local/Ascend/driver:/usr/local/Ascend/driver:ro \
   -v /etc/ascend_install.info:/etc/ascend_install.info:ro \
   -v /home/xjtu/model_zoo/model_asr/:/model:ro \
-  -v /root/config/asr_config_offline.json:/config.json:ro \
+  -v /root/config/asr_config_offline.toml:/config.toml:ro \
   -p 8081:9000 \
   jy-algorithm-app-asr-ascend_cann8.1.rc1-ub2204py310:v1.1.9_251230
   
@@ -131,7 +131,7 @@ docker run -d --name asr_offline_server_251230 \
 
 
 ```bash
-docker run -d --name asr_offline_server_251225   --device /dev/davinci_manager   --device /dev/devmm_svm   --device /dev/hisi_hdc   --device /dev/davinci0   --device /dev/davinci1   -v /usr/local/dcmi:/usr/local/dcmi   -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi   -v /usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64   -v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info   -v /etc/ascend_install.info:/etc/ascend_install.info   -v /home/xjtu/model_zoo/model_asr/:/app/model   -v /root/config/asr_config_offline.json:/config.json  -v /root/config/start.sh:/app/start.sh -e PYTHONUNBUFFERED=1 -e PYTHONFAULTHANDLER=1  --ulimit core=-1 -v /tmp:/tmp  -p 8081:9000   --shm-size=8g   jy-algorithm-app-asr-ascend_cann8.2.rc1-ub2204py310:v1.1.9_251225
+docker run -d --name asr_offline_server_251225   --device /dev/davinci_manager   --device /dev/devmm_svm   --device /dev/hisi_hdc   --device /dev/davinci0   --device /dev/davinci1   -v /usr/local/dcmi:/usr/local/dcmi   -v /usr/local/bin/npu-smi:/usr/local/bin/npu-smi   -v /usr/local/Ascend/driver/lib64:/usr/local/Ascend/driver/lib64   -v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info   -v /etc/ascend_install.info:/etc/ascend_install.info   -v /home/xjtu/model_zoo/model_asr/:/app/model   -v /root/config/asr_config_offline.toml:/config.toml  -v /root/config/start.sh:/app/start.sh -e PYTHONUNBUFFERED=1 -e PYTHONFAULTHANDLER=1  --ulimit core=-1 -v /tmp:/tmp  -p 8081:9000   --shm-size=8g   jy-algorithm-app-asr-ascend_cann8.2.rc1-ub2204py310:v1.1.9_251225
 ```
 
 
@@ -149,7 +149,7 @@ docker run -d --name asr_offline_server_251227 \
   -v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info \
   -v /etc/ascend_install.info:/etc/ascend_install.info \
   -v /home/xjtu/model_zoo/model_asr/:/app/model \
-  -v /root/config/asr_config_offline.json:/config.json \
+  -v /root/config/asr_config_offline.toml:/config.toml \
   -e ASCEND_DOCKER_RUNTIME=True \
   -p 8081:9000 \
   --shm-size=128g \
@@ -171,7 +171,7 @@ docker run -d --name asr_offline_server_251226_fix2 \
   -v /usr/local/Ascend/driver/version.info:/usr/local/Ascend/driver/version.info \
   -v /etc/ascend_install.info:/etc/ascend_install.info \
   -v /home/xjtu/model_zoo/model_asr/:/app/model \
-  -v /root/config/asr_config_offline.json:/config.json \
+  -v /root/config/asr_config_offline.toml:/config.toml \
   -v /root/config/start.sh:/app/start.sh \
   -v /tmp:/tmp \
   -e PYTHONUNBUFFERED=1 \

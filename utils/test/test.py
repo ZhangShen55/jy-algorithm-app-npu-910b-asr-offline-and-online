@@ -4,6 +4,9 @@ import torch_npu  # 导入昇腾插件
 # 自动迁移：将cuda API映射为npu API
 from torch_npu.contrib import transfer_to_npu
 import time
+from pathlib import Path
+
+TEST_DATA_DIR = Path(__file__).resolve().parents[1] / "test-data"
 
 print("PyTorch版本:", torch.__version__)
 print("NPU设备数量:", torch_npu.npu.device_count())
@@ -31,7 +34,7 @@ for i in range(1):  # 循环100次
     # 输出每次循环的运行时长
     print("模型加载成功")
     start = time.perf_counter()
-    res = model.generate(input="/home/xjtu/zhangs/asr_dev/app/test.aac", batch_size_s=300)
+    res = model.generate(input=str(TEST_DATA_DIR / "test.aac"), batch_size_s=300)
     elapsed = time.perf_counter() - start
     # 定义输出数组
     results = []

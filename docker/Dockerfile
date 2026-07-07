@@ -27,7 +27,6 @@ RUN if [ -n "${http_proxy}" ] || [ -n "${https_proxy}" ] || [ -n "${HTTP_PROXY}"
     fi > /etc/apt/apt.conf.d/01proxy && \
     apt-get update && apt-get install -y --no-install-recommends \
         nginx \
-        jq \
         ffmpeg \
         libsndfile1 \
         ca-certificates \
@@ -81,7 +80,7 @@ FROM deps AS runtime
 WORKDIR /app
 
 COPY --from=builder /opt/app_encrypted /app
-COPY config.json /config.json
+COPY config.toml /config.toml
 COPY nginx.conf /etc/nginx/nginx.conf
 
 RUN chmod +x /app/start.sh && \

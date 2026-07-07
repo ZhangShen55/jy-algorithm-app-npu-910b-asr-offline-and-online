@@ -12,7 +12,7 @@ import requests
 
 # ========== 核心配置调整 ==========
 URL = "http://10.236.2.52:8081/v1.1.8/seacraft_asr"
-AUDIO_PATH = r"/home/xjtu/zhangs/asr_dev/teacher1.wav"
+AUDIO_PATH = r"/home/xjtu/zhangs/asr_dev/app/teacher1.wav"
 # 调整 1: 平均5分钟，超时建议设为 15分钟(900s) 或更长，防止客户端因波动断开
 TIMEOUT = 900
 WORKERS = 16

@@ -1,22 +1,23 @@
-import json
 import os
 from dataclasses import dataclass
 from typing import Optional
 
+import toml
 
-def _load_json(path: str) -> dict:
+
+def _load_toml(path: str) -> dict:
     with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        return toml.load(f)
 
 
 @dataclass
 class Settings:
-    # 从环境变量读取 config.json 路径
-    config_path: str = os.getenv("CONFIG_PATH", "app/config.json")
+    # 从环境变量读取 config.toml 路径
+    config_path: str = os.getenv("CONFIG_PATH", "app/config.toml")
     _cfg: dict = None  # 实际配置字典
 
     def __post_init__(self):
-        self._cfg = _load_json(self.config_path)
+        self._cfg = _load_toml(self.config_path)
 
     # 基础配置
     @property
@@ -72,7 +73,7 @@ class Settings:
 
     @property
     def emotion_model_dir(self) -> str:
-        return self._cfg.get("emotion_modek_dir", "/app/model/emotion2vec_plus_seed")
+        return self._cfg.get("emotion_model_dir", "/app/model/emotion2vec_plus_seed")
 
     @property
     def asr_online_model_dir(self) -> str:
