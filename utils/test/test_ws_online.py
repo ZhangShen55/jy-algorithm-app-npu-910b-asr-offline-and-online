@@ -66,6 +66,6 @@ if __name__ == "__main__":
 
     #======================================================================
     # 单个客户端测试
-    pcm_file = "/home/xjtu/zhangs/asr_dev/test2_16k(1).pcm" # PCM 文件路径
+    pcm_file = "/home/xjtu/zhangs/asr_dev/app/utils/test-data/test2_16k(1).pcm" # PCM 文件路径
     ws_url = "ws://10.236.2.52:8081/v1.0.1/seacraft_asr_online"  # WebSocket 服务端地址
     asyncio.run(send_audio_chunks(pcm_file, ws_url))
