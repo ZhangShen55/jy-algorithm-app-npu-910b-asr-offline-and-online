@@ -85,7 +85,7 @@ class Settings:
 
     @property
     def whisper_model_dir(self) -> str:
-        return self._cfg.get("whisper_model_dir", "/model/faster-whisper-large-v3")
+        return self._cfg.get("whisper_model_dir", "/model/Whisper-large-v3-turbo")
 
     @property
     def compute_type(self) -> str:

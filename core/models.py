@@ -133,11 +133,12 @@ async def load_models_if_needed():
                     disable_pbar=True
                 )
 
-        whisper_model_path = os.path.join(settings.whisper_model_dir, "large-v3-turbo.pt")
-        _model_whisper = whisper.load_model(
-            name=whisper_model_path,
-            device=TARGET_DEVICE,
-        )
+        if settings.open_mul_lang and _model_whisper is None:
+            whisper_model_path = os.path.join(settings.whisper_model_dir, "large-v3-turbo.pt")
+            _model_whisper = whisper.load_model(
+                name=whisper_model_path,
+                device=TARGET_DEVICE,
+            )
 
 
 def get_asr_model():
