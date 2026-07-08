@@ -1,4 +1,5 @@
 import re
+import math
 
 from app.entity.data import *
 from typing import List, Dict, Any, Union
@@ -321,7 +322,17 @@ def convert_role_ids(segments: list, teacher_id: int, student_ids: list) -> list
     return segments
 
 
-def calculate_speech_rate(text, start_time, end_time):
+def count_content_words(text):
+    """
+    统计实际内容数量：中文按字，英文按词，数字串按 token，标点空格不计。
+    """
+    if not text:
+        return 0
+    tokens = re.findall(r"[\u4e00-\u9fff]|[A-Za-z]+(?:'[A-Za-z]+)?|\d+", text)
+    return len(tokens)
+
+
+def calculate_speech_rate(text, start_time, end_time, rate_factor=0.4):
     """
     计算语速（字/分钟），区分中文字符和英文单词
     
@@ -339,20 +350,7 @@ def calculate_speech_rate(text, start_time, end_time):
         if duration <= 0:
             return 120
         
-        # 只移除中英逗号、句号、感叹号、问号
-        punctuation_to_remove = ",.?!，。！？"
-        translator = str.maketrans('', '', punctuation_to_remove)
-        clean_text = text.translate(translator)
-        
-        # 计算中文字符数量
-        chinese_chars = len(re.findall(r'[\u4e00-\u9fff]', clean_text))
-        
-        # 计算英文单词数量
-        non_chinese_text = re.sub(r'[\u4e00-\u9fff]', '', clean_text)
-        english_words = len(non_chinese_text.split())
-        
-        # 总字数
-        total_words = chinese_chars + english_words
+        total_words = count_content_words(text)
         
         # 计算语速（字/分钟），结果取整
         if total_words == 0:
@@ -361,8 +359,71 @@ def calculate_speech_rate(text, start_time, end_time):
         duration_minutes = duration / 60
         speech_rate = total_words / duration_minutes
         
-        return int(speech_rate * 0.7)  # chang
+        return int(speech_rate * rate_factor)
     
     except Exception as e:
         # print(f"计算语速时出错: {e}")
         return 120
+
+
+def calculate_speed_info(segments, audio_total_s, units=(1, 5, 10)):
+    """
+    按固定时间窗口统计语速。这里返回原始字/分钟，不乘 speech_rate.rate_factor。
+    """
+    valid_segments = []
+    last_ed = 0.0
+    for segment in segments:
+        try:
+            bg = float(segment.get("bg", 0))
+            ed = float(segment.get("ed", 0))
+        except (TypeError, ValueError):
+            continue
+        if ed <= bg:
+            continue
+
+        valid_segments.append({
+            "bg": bg,
+            "ed": ed,
+            "duration": ed - bg,
+            "content_count": count_content_words(segment.get("segment_text", "")),
+        })
+        last_ed = max(last_ed, ed)
+
+    try:
+        axis_end = float(audio_total_s)
+    except (TypeError, ValueError):
+        axis_end = 0.0
+    axis_end = max(axis_end, last_ed)
+
+    result = []
+    for unit in units:
+        window_seconds = unit * 60
+        if axis_end <= 0:
+            speeds = []
+        else:
+            segment_count = int(math.ceil(axis_end / window_seconds))
+            speeds = []
+            for idx in range(segment_count):
+                window_start = idx * window_seconds
+                window_end = min(window_start + window_seconds, axis_end)
+                nominal_seconds = window_end - window_start
+                window_words = 0.0
+
+                if nominal_seconds > 0:
+                    for segment in valid_segments:
+                        overlap_start = max(window_start, segment["bg"])
+                        overlap_end = min(window_end, segment["ed"])
+                        overlap_seconds = overlap_end - overlap_start
+                        if overlap_seconds > 0:
+                            window_words += segment["content_count"] * (overlap_seconds / segment["duration"])
+
+                    speeds.append(round(window_words / (nominal_seconds / 60)) if window_words > 0 else 0)
+
+        result.append({
+            "unit": unit,
+            "segment_info": {
+                "segment_count": len(speeds),
+                "speed": speeds,
+            },
+        })
+    return result

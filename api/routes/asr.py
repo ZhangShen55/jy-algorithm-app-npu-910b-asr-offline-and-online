@@ -18,7 +18,13 @@ from app.core.models import (
 )
 from app.core.concurrency import acquire_gpu_slot, generate_with_gpu_lock
 from app.utils.audio_utils import preprocess_audio, write_audio_bytes_to_temp_file, crop_audio
-from app.utils.feature_utils import extract_features, identify_teacher, convert_role_ids, calculate_speech_rate
+from app.utils.feature_utils import (
+    extract_features,
+    identify_teacher,
+    convert_role_ids,
+    calculate_speech_rate,
+    calculate_speed_info,
+)
 from app.utils.asr_stats import update_stat, update_fail_task
 
 logger = logging.getLogger(__name__)
@@ -200,7 +206,12 @@ async def api_asr_mul(request: AsrRequestParams = Depends(get_asr_params)):
                             emotion_label = _select_top_emotion_label(res_emotion)
                             emotion = _map_emotion_label(emotion_label)
 
-                    speed = calculate_speech_rate(segment["text"], segment["start"] / 1000, segment["end"] / 1000)
+                    speed = calculate_speech_rate(
+                        segment["text"],
+                        segment["start"] / 1000,
+                        segment["end"] / 1000,
+                        settings.speech_rate_factor,
+                    )
                     item = {
                         "segment_text": segment["text"],
                         "bg": f"{segment['start'] / 1000:.2f}",
@@ -223,6 +234,7 @@ async def api_asr_mul(request: AsrRequestParams = Depends(get_asr_params)):
                 ret = {
                     "language": request.language,
                     "segments": segments,
+                    "speed_info": calculate_speed_info(segments, audio_tensor.shape[-1] / sample_rate),
                     "text": text,
                     "load_audio_time_ms": f"{load_audio_time_ms:.2f}",
                     "gpu_time_ms": f"{gpu_time_ms:.2f}",
@@ -274,7 +286,12 @@ async def api_asr_mul(request: AsrRequestParams = Depends(get_asr_params)):
                                 "ed": f"{timestamps[i][1] / 1000:.2f}",
                                 "word_text": word_text
                             })
-                speed = calculate_speech_rate(segment["text"], segment["start"] / 1000, segment["end"] / 1000)
+                speed = calculate_speech_rate(
+                    segment["text"],
+                    segment["start"] / 1000,
+                    segment["end"] / 1000,
+                    settings.speech_rate_factor,
+                )
                 segments.append({
                     "segment_text": segment["text"],
                     "bg": f"{segment['start'] / 1000:.2f}",
@@ -285,6 +302,7 @@ async def api_asr_mul(request: AsrRequestParams = Depends(get_asr_params)):
             ret = {
                 "language": request.language,
                 "segments": segments,
+                "speed_info": calculate_speed_info(segments, audio_tensor.shape[-1] / sample_rate),
                 "text": text,
                 "load_audio_time_ms": f"{load_audio_time_ms:.2f}",
                 "gpu_time_ms": f"{gpu_time_ms:.2f}"

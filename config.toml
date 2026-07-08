@@ -1,7 +1,7 @@
 version = "seacraft-asr-app-v1.1.9"
 id_engine = "1"
 ngpu = 4
-device = "npu:0"
+device = "npu:3"
 instance_count = 4
 concurrency = 5
 ncpu = 4
@@ -26,6 +26,9 @@ open_online = true
 open_emotion = true
 bert_device = "npu"
 ban_hotword = true
+
+[speech_rate]
+rate_factor = 0.6
 
 [npu_plan]
 "0" = 1

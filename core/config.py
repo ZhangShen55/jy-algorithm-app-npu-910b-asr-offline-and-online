@@ -133,5 +133,9 @@ class Settings:
     def ban_hotword(self) -> bool:
         return self._cfg.get("ban_hotword", False)
 
+    @property
+    def speech_rate_factor(self) -> float:
+        return float(self._cfg.get("speech_rate", {}).get("rate_factor", 0.4))
+
 
 settings = Settings()
