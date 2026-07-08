@@ -25,9 +25,43 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+EMOTION_LABEL_MAP = {
+    "中立/neutral": "平淡",
+    "其他/other": "平淡",
+    "<unk>": "平淡",
+    "开心/happy": "积极",
+    "吃惊/surprised": "兴奋",
+    "生气/angry": "强调",
+    "难过/sad": "思考",
+    "厌恶/disgusted": "思考",
+    "恐惧/fearful": "疑问",
+}
+
 
 def _generate_task_id() -> str:
     return str(uuid.uuid4())
+
+
+def _map_emotion_label(label: str | None) -> str:
+    if not label:
+        return "平淡"
+    return EMOTION_LABEL_MAP.get(label, "平淡")
+
+
+def _select_top_emotion_label(res_emotion) -> str | None:
+    if not res_emotion:
+        return None
+    first = res_emotion[0] if isinstance(res_emotion, list) else res_emotion
+    if not isinstance(first, dict):
+        return None
+    scores = first.get("scores") or []
+    labels = first.get("labels") or []
+    if not scores or not labels:
+        return None
+    max_idx = scores.index(max(scores))
+    if max_idx >= len(labels):
+        return None
+    return labels[max_idx]
 
 
 @router.post("/v1.1.8/seacraft_asr")
@@ -152,43 +186,10 @@ async def api_asr_mul(request: AsrRequestParams = Depends(get_asr_params)):
                             raise HTTPException(status_code=400, detail=f"open_emotion={settings.open_emotion} 未开启情感分析模型")
                             # return {"msg": f"open_emotion={settings.open_emotion} 未开启情感分析模型", "code": 4003}
 
-                        emotion_tmp = None
-                        # 关键词（文本）优先
-                        emotion_dict = {
-                            "激昂": [
-                                "必须", "一定要", "太重要了", "很重要", "绝对不能", "不错",
-                                "请大家认真听", "这特别关键", "很容易错", "太震撼了",
-                                "马上就要", "我们要", "这是一种信念", "我再说一遍", "我郑重告诉你们",
-                                "太精彩了", "你们一定要记住", "这太关键了", "绝不能忽视",
-                                "非常震撼", "简直太强了", "有没有感觉到", "我强调过很多次",
-                                "必须掌握", "我强烈建议", "这是重点", "注意这个地方", "这里注意",
-                                "这是考试必考", "一定会考的", "这是个大招", "非常核心",
-                                "千万别错过", "一不小心就会出错", "我们现在非常重要的一步",
-                                "我就问你厉不厉害"
-                            ],
-                            "热忱": [
-                                "我很喜欢", "特别有意思", "真棒", "非常精彩", "我们一起来看一下", "超级有趣",
-                                "真好", "太棒了", "超赞", "好有趣", "太可了", "蛮妙的", "很赞",
-                                "真的不错", "好理解", "挺喜欢", "我一看就兴奋"
-                            ],
-                            "沉稳": [
-                                "唉", "算了", "随便吧", "就这样吧", "真无语", "懒得说", "不想讲了", "失望",
-                                "有点烦", "没啥意思", "有点累", "你们自己看吧", "随你们", "讲不动了",
-                                "都讲过了", "不讲也罢", "怎么讲都一样", "讲了也没用", "不清楚？"
-                            ]
-                        }
-                        for emotion_label, keywords in emotion_dict.items():
-                            for kw in keywords:
-                                if kw in segment["text"]:
-                                    emotion_tmp = emotion_label
-                                    break
-                            if emotion_tmp:
-                                break
-
                         seg_len_ms = segment["end"] - segment["start"]
-                        if emotion_tmp is None and seg_len_ms > 10000:
+                        if seg_len_ms > 10000:
                             emotion = "平淡"
-                        elif emotion_tmp is None:
+                        else:
                             # 音频片段识别
                             cropped = crop_audio(audio_tensor, segment["start"] + 0.1, segment["end"] + 0.1, sample_rate)
                             with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as segf:
@@ -196,24 +197,8 @@ async def api_asr_mul(request: AsrRequestParams = Depends(get_asr_params)):
                                 tmp_paths.append(seg_path)
                             torchaudio.save(seg_path, cropped, sample_rate)
                             res_emotion = get_emotion_model().generate(seg_path, granularity="utterance", extract_embedding=False)
-                            max_score = max(res_emotion[0]['scores'])
-                            emotion_label = res_emotion[0]['labels'][res_emotion[0]['scores'].index(max_score)]
-                            if request.noRealEmo:
-                                mapping = {
-                                    "热忱": ["吃惊/surprised", "生气/angry", "恐惧/fearful", "开心/happy"],
-                                    "平淡": ["<unk>", "其他/other", "中立/neutral"]
-                                }
-                                if emotion_label in mapping["热忱"]:
-                                    emotion_label = "热忱"
-                                elif emotion_label in mapping["平淡"]:
-                                    emotion_label = "平淡"
-                                emotion = emotion_label
-                            else:
-                                if emotion_label in ["<unk>", "中立/neutral"] or emotion_label is None:
-                                    emotion_label = "平淡"
-                                emotion = emotion_label.split("/")[0]
-                        else:
-                            emotion = emotion_tmp
+                            emotion_label = _select_top_emotion_label(res_emotion)
+                            emotion = _map_emotion_label(emotion_label)
 
                     speed = calculate_speech_rate(segment["text"], segment["start"] / 1000, segment["end"] / 1000)
                     item = {
