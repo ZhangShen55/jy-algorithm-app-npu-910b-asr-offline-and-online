@@ -70,6 +70,26 @@ def _select_top_emotion_label(res_emotion) -> str | None:
     return labels[max_idx]
 
 
+def _format_spk_role(spk) -> str | None:
+    if spk is None or spk == "":
+        return None
+    spk_text = str(spk)
+    return spk_text if spk_text.startswith("spk_") else f"spk_{spk_text}"
+
+
+def _convert_segments_to_spk_roles(segments: List[dict]) -> List[dict]:
+    role_counts = {}
+    for segment in segments:
+        role = _format_spk_role(segment.get("role"))
+        if role:
+            role_counts[role] = role_counts.get(role, 0) + 1
+
+    fallback_role = max(role_counts, key=role_counts.get) if role_counts else "spk_0"
+    for segment in segments:
+        segment["role"] = _format_spk_role(segment.get("role")) or fallback_role
+    return segments
+
+
 @router.post("/v1.1.8/seacraft_asr")
 async def api_asr_mul(request: AsrRequestParams = Depends(get_asr_params)):
     """
@@ -224,12 +244,15 @@ async def api_asr_mul(request: AsrRequestParams = Depends(get_asr_params)):
                         item["emotion"] = emotion if emotion is not None else "平淡"
                     segments.append(item)
 
-                # 身份识别（老师/学生）
-                spk_features = extract_features(segments)
-                teacher_role, scores, student_roles = identify_teacher(spk_features)
-                if teacher_role is None:
-                    teacher_role = max(spk_features, key=lambda x: spk_features[x]["keyword_count"])
-                segments = convert_role_ids(segments, teacher_role, student_roles)
+                if request.showRoleIdentify:
+                    # 身份识别（老师/学生）
+                    spk_features = extract_features(segments)
+                    teacher_role, scores, student_roles = identify_teacher(spk_features)
+                    if teacher_role is None:
+                        teacher_role = max(spk_features, key=lambda x: spk_features[x]["keyword_count"])
+                    segments = convert_role_ids(segments, teacher_role, student_roles)
+                else:
+                    segments = _convert_segments_to_spk_roles(segments)
 
                 ret = {
                     "language": request.language,

@@ -21,6 +21,7 @@ class AsrRequestParams:
     showEmotion: bool = False
     noRealEmo: bool = False
     showSpeed: bool = False
+    showRoleIdentify: bool = True
     # ws: Optional[websockets.WebSocketClientProtocol] = None  # 如果使用，需要取消注释
 
     # def hotwords_as_string(self) -> str:
@@ -38,6 +39,7 @@ async def get_asr_params(
     showEmotion: Annotated[bool, Form()] = False,
     noRealEmo: Annotated[bool, Form()] = False,
     showSpeed: Annotated[bool, Form()] = False,
+    showRoleIdentify: Annotated[bool, Form()] = True,
 ) -> AsrRequestParams:
     if hotWords is None:
         hotWords = []
@@ -58,7 +60,8 @@ async def get_asr_params(
         openPanel=openPanel,
         showEmotion=showEmotion,
         noRealEmo=noRealEmo,
-        showSpeed=showSpeed
+        showSpeed=showSpeed,
+        showRoleIdentify=showRoleIdentify
         # ws=ws
     )
 

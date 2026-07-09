@@ -81,7 +81,19 @@ docker build  -f Dockerfile.armor -t jy-algorithm-app-asr-ascend_cann8.1.rc1-ub2
 --build-arg no_proxy=localhost,127.0.0.1 \
 --build-arg NO_PROXY=localhost,127.0.0.1   .
 
+# 26年7月9号构建版本
+```bash
+  docker build \
+    -f Dockerfile.armor \
+    --build-arg BUILD_HTTP_PROXY=http://127.0.0.1:18080 \
+    --build-arg BUILD_HTTPS_PROXY=http://127.0.0.1:18080 \
+    --network=host \
+    -t jy-algorithm-app-asr-ascend_cann8.1.rc1-ub2204py310:v1.1.9_260709 .
+```
+
+
 # run:
+```bash
 docker run -d --name asr_offline_server_260104 \
   --runtime=ascend \
   --ipc=host \
@@ -186,3 +198,26 @@ docker run -d --name asr_offline_server_251226_fix2 \
 
 ## Dockerfile.cann-py310 文件说明
     - 基于Ubuntu2204，构建Ascend-910b-cann8.2.rc1-ub2204py310环境镜像
+
+
+# run： jy-algorithm-app-asr-ascend_cann8.1.rc1-ub2204py310:v1.1.9_260709
+```bash
+docker run -d --name asr_offline_server_260709 \
+  --runtime=ascend \
+  --privileged \
+  --ipc=host \
+  --device /dev/davinci_manager \
+  --device /dev/devmm_svm \
+  --device /dev/hisi_hdc \
+  --device /dev/davinci3 \
+  --device /dev/davinci6 \
+  -e ASCEND_RT_VISIBLE_DEVICES=3,6 \
+  -v /usr/local/dcmi:/usr/local/dcmi:ro \
+  -v /usr/local/sbin/npu-smi:/usr/local/sbin/npu-smi:ro \
+  -v /usr/local/Ascend/driver:/usr/local/Ascend/driver:ro \
+  -v /etc/ascend_install.info:/etc/ascend_install.info:ro \
+  -v /home/xjtu/model_zoo/model_asr/:/model:ro \
+  -v /root/config/asr_config_offline_test.toml:/config.toml:ro \
+  -p 8083:9000 \
+  jy-algorithm-app-asr-ascend_cann8.1.rc1-ub2204py310:v1.1.9_260709
+```

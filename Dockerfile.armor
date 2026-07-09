@@ -1,26 +1,35 @@
 FROM cann:8.1.rc1-910b-ubuntu22.04-py3.10 AS base
 
-ARG http_proxy
-ARG https_proxy
-ARG HTTP_PROXY
-ARG HTTPS_PROXY
-ARG no_proxy
-ARG NO_PROXY
+# ARG http_proxy
+# ARG https_proxy
+# ARG HTTP_PROXY
+# ARG HTTPS_PROXY
+# ARG no_proxy
+# ARG NO_PROXY
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    http_proxy=${http_proxy} \
-    https_proxy=${https_proxy} \
-    HTTP_PROXY=${HTTP_PROXY} \
-    HTTPS_PROXY=${HTTPS_PROXY} \
-    no_proxy=${no_proxy} \
-    NO_PROXY=${NO_PROXY} \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PIP_NO_CACHE_DIR=1
+# ENV DEBIAN_FRONTEND=noninteractive \
+#     http_proxy=${http_proxy} \
+#     https_proxy=${https_proxy} \
+#     HTTP_PROXY=${HTTP_PROXY} \
+#     HTTPS_PROXY=${HTTPS_PROXY} \
+#     no_proxy=${no_proxy} \
+#     NO_PROXY=${NO_PROXY} \
+#     PIP_DISABLE_PIP_VERSION_CHECK=1 \
+#     PIP_NO_CACHE_DIR=1
 
-RUN if [ -n "${http_proxy}" ] || [ -n "${https_proxy}" ] || [ -n "${HTTP_PROXY}" ] || [ -n "${HTTPS_PROXY}" ]; then \
-        echo "Acquire::http::Proxy \"${http_proxy:-$HTTP_PROXY}\";"; \
-        echo "Acquire::https::Proxy \"${https_proxy:-$HTTPS_PROXY}\";"; \
-    fi > /etc/apt/apt.conf.d/01proxy && \
+# RUN if [ -n "${http_proxy}" ] || [ -n "${https_proxy}" ] || [ -n "${HTTP_PROXY}" ] || [ -n "${HTTPS_PROXY}" ]; then \
+#         echo "Acquire::http::Proxy \"${http_proxy:-$HTTP_PROXY}\";"; \
+#         echo "Acquire::https::Proxy \"${https_proxy:-$HTTPS_PROXY}\";"; \
+#     fi > /etc/apt/apt.conf.d/01proxy
+
+ARG BUILD_HTTP_PROXY
+ARG BUILD_HTTPS_PROXY
+RUN rm -f /etc/apt/apt.conf.d/*proxy* /etc/apt/apt.conf.d/*Proxy* && \
+    unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY all_proxy ALL_PROXY no_proxy NO_PROXY && \
+    if [ -n "${BUILD_HTTP_PROXY}" ] || [ -n "${BUILD_HTTPS_PROXY}" ]; then \
+        echo "Acquire::http::Proxy \"${BUILD_HTTP_PROXY}\";" > /etc/apt/apt.conf.d/01proxy; \
+        echo "Acquire::https::Proxy \"${BUILD_HTTPS_PROXY:-$BUILD_HTTP_PROXY}\";" >> /etc/apt/apt.conf.d/01proxy; \
+    fi && \
     apt-get update && apt-get install -y --no-install-recommends \
         nginx \
         ffmpeg \
@@ -32,13 +41,18 @@ RUN if [ -n "${http_proxy}" ] || [ -n "${https_proxy}" ] || [ -n "${HTTP_PROXY}"
 FROM base AS deps
 WORKDIR /app
 
+ARG BUILD_HTTP_PROXY
 ARG PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+ARG PYAV_INDEX_URL=https://pypi.org/simple
+ARG PYAV_VERSION=14.2.0
 ARG PIP_EXTRA_INDEX_URL
 RUN if [ -n "$PIP_INDEX_URL" ]; then pip config set global.index-url "$PIP_INDEX_URL"; fi && \
-    if [ -n "$PIP_EXTRA_INDEX_URL" ]; then pip config set global.extra-index-url "$PIP_EXTRA_INDEX_URL"; fi
+    if [ -n "$PIP_EXTRA_INDEX_URL" ]; then pip config set global.extra-index-url "$PIP_EXTRA_INDEX_URL"; fi && \
+    if [ -n "$BUILD_HTTP_PROXY" ]; then pip config set global.proxy "$BUILD_HTTP_PROXY"; fi
 
 COPY requirements.txt /tmp/requirements.txt
 RUN python -m pip install --upgrade pip && \
+    pip install --no-cache-dir --only-binary=:all: --index-url "$PYAV_INDEX_URL" "av==$PYAV_VERSION" && \
     pip install --no-cache-dir -r /tmp/requirements.txt
 
 
